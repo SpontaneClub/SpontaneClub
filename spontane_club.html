@@ -1,0 +1,393 @@
+Sudah siap saya memberikan kode lengkap dalam satu HTML file. Berikut cara menyimpannya:
+
+1. **Klik tombol Copy Code** di pojok kanan atas kotak kode ini
+2. **Buka VSCode** dan buat file baru (Ctrl+N atau File > New File)
+3. **Paste** kode (Ctrl+V)
+4. **Save** dengan nama: `spontan_club_kas.html`
+
+File HTML lengkap:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spontan Club - Manajemen Kas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1075&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            transform: translateY(-3px);
+        }
+        
+        .active-tab {
+            border-bottom: 3px solid var(--secondary);
+            font-weight: bold;
+        }
+        
+        .income {
+            color: var(--secondary);
+        }
+        
+        .expense {
+            color: var(--danger);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #0d9b6c;
+        }
+        
+        .scrollable {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .scrollable::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .scrollable::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .scrollable::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .game-photo {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        /* Admin Badge */
+        .admin-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        /* Login Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Admin Badge (shown when logged in) -->
+    <div id="admin-badge" class="admin-badge hidden">
+        <i class="fas fa-user-shield mr-2"></i>Admin Mode
+        <button onclick="logout()" class="ml-2 text-sm underline">Logout</button>
+    </div>
+    
+    <!-- Login Button (floating) -->
+    <button id="login-btn" onclick="showLoginModal()" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition">
+        <i class="fas fa-sign-in-alt"></i>
+    </button>
+    
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2 text-white">SPONTAN CLUB</h1>
+            <p class="text-lg text-gray-300">Manajemen Kas & Aktivitas</p>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="flex justify-center space-x-6 mb-8">
+            <button onclick="showTab('transaction')" class="nav-link px-4 py-2 rounded-lg active-tab" id="transaction-tab">
+                <i class="fas fa-exchange-alt mr-2"></i>Transaksi
+            </button>
+            <button onclick="showTab('history')" class="nav-link px-4 py-2 rounded-lg" id="history-tab">
+                <i class="fas fa-history mr-2"></i>History
+            </button>
+            <button onclick="showTab('games')" class="nav-link px-4 py-2 rounded-lg" id="games-tab">
+                <i class="fas fa-futbol mr-2"></i>Sparengan
+            </button>
+        </nav>
+        
+        <!-- Balance Card -->
+        <div class="card p-6 mb-8 text-center">
+            <h2 class="text-xl mb-2">Saldo Kas Saat Ini</h2>
+            <p class="text-3xl font-bold" id="balance">Rp 0</p>
+        </div>
+        
+        <!-- Transaction Tab -->
+        <div id="transaction" class="tab-content">
+            <div id="transaction-forms" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 hidden">
+                <!-- Income Form -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-center"><i class="fas fa-plus-circle income mr-2"></i>Pemasukan</h2>
+                    <form id="income-form">
+                        <div class="mb-4">
+                            <label class="block mb-2">Jumlah</label>
+                            <input type="number" id="income-amount" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Keterangan</label>
+                            <input type="text" id="income-description" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Tanggal</label>
+                            <input type="date" id="income-date" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <button type="submit" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Simpan Pemasukan
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Expense Form -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-center"><i class="fas fa-minus-circle expense mr-2"></i>Pengeluaran</h2>
+                    <form id="expense-form">
+                        <div class="mb-4">
+                            <label class="block mb-2">Jumlah</label>
+                            <input type="number" id="expense-amount" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Keterangan</label>
+                            <input type="text" id="expense-description" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Tanggal</label>
+                            <input type="date" id="expense-date" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <button type="submit" class="btn-primary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Simpan Pengeluaran
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card p-6 mb-8 text-center">
+                <h2 class="text-xl mb-4">Anda dalam mode Viewer</h2>
+                <p class="mb-4">Silakan login sebagai admin untuk menambahkan atau mengubah data</p>
+                <button onclick="showLoginModal()" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login Admin
+                </button>
+            </div>
+        </div>
+        
+        <!-- History Tab -->
+        <div id="history" class="tab-content hidden">
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold mb-4 text-center"><i class="fas fa-history mr-2"></i>Riwayat Transaksi</h2>
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <label class="mr-2">Filter:</label>
+                        <select id="filter-type" class="p-2 rounded bg-gray-700 border border-gray-600">
+                            <option value="all">Semua</option>
+                            <option value="income">Pemasukan</option>
+                            <option value="expense">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="mr-2">Dari:</label>
+                        <input type="date" id="filter-start" class="p-2 rounded bg-gray-700 border border-gray-600 mr-2">
+                        <label class="mr-2">Sampai:</label>
+                        <input type="date" id="filter-end" class="p-2 rounded bg-gray-700 border border-gray-600">
+                        <button onclick="filterTransactions()" class="ml-2 px-3 py-2 bg-blue-600 rounded">Filter</button>
+                    </div>
+                </div>
+                <div class="scrollable">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left py-2">Tanggal</th>
+                                <th class="text-left py-2">Keterangan</th>
+                                <th class="text-left py-2">Jenis</th>
+                                <th class="text-right py-2">Jumlah</th>
+                                <th id="action-header" class="text-right py-2 hidden">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-history">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Games Tab -->
+        <div id="games" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Add Game Form -->
+                <div id="game-form-container" class="card p-6 hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-center"><i class="fas fa-plus-circle mr-2"></i>Tambah Sparengan</h2>
+                    <form id="game-form">
+                        <div class="mb-4">
+                            <label class="block mb-2">Tanggal</label>
+                            <input type="date" id="game-date" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Lawan</label>
+                            <input type="text" id="game-opponent" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-2">Skor Kita</label>
+                                <input type="number" id="game-our-score" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                            </div>
+                            <div>
+                                <label class="block mb-2">Skor Lawan</label>
+                                <input type="number" id="game-their-score" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Lokasi</label>
+                            <input type="text" id="game-location" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Foto (URL)</label>
+                            <input type="text" id="game-photo" class="w-full p-2 rounded bg-gray-700 border border-gray-600" placeholder="Masukkan URL gambar">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2">Catatan</label>
+                            <textarea id="game-notes" class="w-full p-2 rounded bg-gray-700 border border-gray-600" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Simpan Sparengan
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Game History -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-center"><i class="fas fa-history mr-2"></i>Riwayat Sparengan</h2>
+                    <div class="scrollable">
+                        <div id="game-history">
+                            <!-- Games will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login Admin</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block mb-2">Username</label>
+                    <input type="text" id="username" class="w-full p-3 rounded bg-gray-700 border border-gray-600" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block mb-2">Password</label>
+                    <input type="password" id="password" class="w-full p-3 rounded bg-gray-700 border border-gray-600" required>
+                </div>
+                <button type="submit" class="btn-primary w-full py-3 rounded-lg font-semibold text-lg mb-4">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+                <p class="text-center text-sm">Default: admin / admin123</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Transaction Details -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-semibold mb-4" id="modal-title">Detail Transaksi</h2>
+            <div id="modal-content">
+                <!-- Modal content will be loaded here -->
+            </div>
+            <div class="mt-4 flex justify-end space-x-2">
+                <button id="delete-btn" onclick="deleteTransaction()" class="px-4 py-2 bg-red-600 rounded-lg hidden">Hapus</button>
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-600 rounded-lg">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'admin123'
+        };
+        
+        // Check if user is logged in
+        function isLoggedIn() {
+            return localStorage.getItem('loggedIn') === 'true';
+        }
+        
+        // Initialize data if not exists
+        if (!localStorage.getItem('transactions')) {
+            localStorage.setItem('transactions', JSON.stringify([]));
+        }
+        
+        if (!localStorage.getItem('games')) {
+            localStorage.setItem('games', JSON.stringify([]));
+        }
+        
+       
