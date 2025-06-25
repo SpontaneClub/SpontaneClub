@@ -128,30 +128,35 @@ if menu == "Pengeluaran" and st.session_state['user'] == "admin":
 if menu == "Riwayat Kas":
     st.subheader("📊 Riwayat Uang Kas")
     df = pd.read_csv(KAS_FILE)
-    df['Tanggal'] = pd.to_datetime(df['Tanggal'])
-    df['Jumlah'] = df['Jumlah'].astype(int)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date())
-    with col2:
-        tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date())
+    if df.empty:
+        st.info("Belum ada data kas.")
+    else:
+        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+        df['Jumlah'] = df['Jumlah'].astype(int)
 
-    keyword = st.text_input("Cari Keterangan")
+        col1, col2 = st.columns(2)
+        with col1:
+            tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date())
+        with col2:
+            tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date())
 
-    filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
-                  (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
-    if keyword:
-        filtered = filtered[filtered['Keterangan'].str.contains(keyword, case=False)]
+        keyword = st.text_input("Cari Keterangan")
 
-    pemasukan = filtered[filtered['Jenis'] == 'Pemasukan']['Jumlah'].sum()
-    pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
-    saldo = pemasukan - pengeluaran
+        filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
+                      (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
+        if keyword:
+            filtered = filtered[filtered['Keterangan'].str.contains(keyword, case=False)]
 
-    st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
-    st.write(f"📤 Total Pengeluaran: Rp {pengeluaran:,}")
-    st.write(f"📦 Saldo: Rp {saldo:,}")
-    st.dataframe(filtered)
+        pemasukan = filtered[filtered['Jenis'] == 'Pemasukan']['Jumlah'].sum()
+        pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
+        saldo = pemasukan - pengeluaran
+
+        st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
+        st.write(f"📤 Total Pengeluaran: Rp {pengeluaran:,}")
+        st.write(f"📦 Saldo: Rp {saldo:,}")
+        st.dataframe(filtered)
+
 
 # ======== FITUR: INPUT SPARING ========
 if menu == "Input Sparing" and st.session_state['user'] == "admin":
@@ -169,24 +174,28 @@ if menu == "Input Sparing" and st.session_state['user'] == "admin":
 if menu == "History Sparing":
     st.subheader("📸 Riwayat Sparing")
     df = pd.read_csv(SPARING_FILE)
-    df['Tanggal'] = pd.to_datetime(df['Tanggal'])
 
-    col1, col2 = st.columns(2)
-    with col1:
-        tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date(), key="sparing_start")
-    with col2:
-        tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date(), key="sparing_end")
+    if df.empty:
+        st.info("Belum ada data sparing.")
+    else:
+        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
 
-    keyword = st.text_input("Cari Nama Lawan")
+        col1, col2 = st.columns(2)
+        with col1:
+            tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date(), key="sparing_start")
+        with col2:
+            tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date(), key="sparing_end")
 
-    filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
-                  (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
-    if keyword:
-        filtered = filtered[filtered['Lawan'].str.contains(keyword, case=False)]
+        keyword = st.text_input("Cari Nama Lawan")
 
-    for _, row in filtered.iterrows():
-        st.markdown(f"### 🆚 {row['Lawan']} ({row['Tanggal'].date()})")
-        st.markdown(f"*Skor:* {row['Skor']}")
-        if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
-            st.image(row['Foto'], width=300)
-        st.markdown("---")
+        filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
+                      (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
+        if keyword:
+            filtered = filtered[filtered['Lawan'].str.contains(keyword, case=False)]
+
+        for _, row in filtered.iterrows():
+            st.markdown(f"### 🆚 {row['Lawan']} ({row['Tanggal'].date()})")
+            st.markdown(f"**Skor:** {row['Skor']}")
+            if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
+                st.image(row['Foto'], width=300)
+            st.markdown("---")
