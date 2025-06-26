@@ -137,7 +137,7 @@ if menu == "Riwayat Kas":
     if df.empty:
         st.info("Belum ada data kas.")
     else:
-        df['Tanggal Bayar'] = pd.to_datetime(df['Tanggal Bayar'])
+        df['Tanggal Bayar'] = pd.to_datetime(df['Tanggal Bayar']).dt.date
         df['Jumlah'] = df['Jumlah'].astype(int)
         keyword = st.text_input("Cari Nama/Detail")
 
