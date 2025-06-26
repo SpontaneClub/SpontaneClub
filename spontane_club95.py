@@ -192,5 +192,5 @@ if menu == "Agenda":
         for _, row in df.iterrows():
             st.markdown(f"### 📌 {row['Kegiatan']}")
             if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
-                st.image(row['Foto'], use_column_width=True)
+                st.image(row['Foto'], use_container_width=True)
             st.markdown("---")
