@@ -10,7 +10,6 @@ st.set_page_config(page_title="Spontan Club", layout="centered")
 
 # ======== KONFIGURASI FILE & FOLDER ========
 KAS_FILE = 'kas_data.csv'
-SPARING_FILE = 'sparing_data.csv'
 AGENDA_FILE = 'agenda_data.csv'
 STRUKTUR_FILE = 'struktur_data.csv'
 PHOTO_FOLDER = 'sparing_photos'
@@ -25,7 +24,6 @@ def init_csv(filename, columns):
         df.to_csv(filename, index=False)
 
 init_csv(KAS_FILE, ["Tanggal", "Jenis", "Keterangan", "Jumlah"])
-init_csv(SPARING_FILE, ["Tanggal", "Lawan", "Skor", "Foto"])
 init_csv(AGENDA_FILE, ["Tanggal", "Kegiatan", "Foto"])
 init_csv(STRUKTUR_FILE, ["Jabatan", "Nama"])
 
@@ -67,9 +65,9 @@ if 'user' not in st.session_state:
 # ======== MENU ========
 st.title("⚽ Spontan Club Management")
 if st.session_state['user'] == "admin":
-    menu = st.sidebar.radio("Menu", ["Pemasukan", "Pengeluaran", "Riwayat Kas", "Input Sparing", "History Sparing", "Input Agenda", "Agenda", "Struktural"])
+    menu = st.sidebar.radio("Menu", ["Pemasukan", "Pengeluaran", "Riwayat Kas", "Input Agenda", "Agenda", "Struktural"])
 else:
-    menu = st.sidebar.radio("Menu", ["Riwayat Kas", "History Sparing", "Agenda", "Struktural"])
+    menu = st.sidebar.radio("Menu", ["Riwayat Kas", "Agenda", "Struktural"])
 
 # ======== FUNGSI TAMBAHAN ========
 def tambah_kas(jenis, keterangan, jumlah):
@@ -82,22 +80,6 @@ def tambah_kas(jenis, keterangan, jumlah):
     }
     df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
     df.to_csv(KAS_FILE, index=False)
-
-def tambah_sparing(tanggal, lawan, skor, foto):
-    filename = None
-    if foto is not None:
-        filename = os.path.join(PHOTO_FOLDER, foto.name)
-        with open(filename, "wb") as f:
-            f.write(foto.read())
-    df = pd.read_csv(SPARING_FILE)
-    data = {
-        "Tanggal": tanggal,
-        "Lawan": lawan,
-        "Skor": skor,
-        "Foto": filename
-    }
-    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-    df.to_csv(SPARING_FILE, index=False)
 
 def tambah_agenda(tanggal, kegiatan, foto):
     filename = None
@@ -139,6 +121,39 @@ if menu == "Pengeluaran" and st.session_state['user'] == "admin":
         if ket and jml > 0:
             tambah_kas("Pengeluaran", ket, jml)
             st.success("Pengeluaran berhasil disimpan!")
+
+# ======== FITUR: RIWAYAT KAS ========
+if menu == "Riwayat Kas":
+    st.subheader("📊 Riwayat Uang Kas")
+    df = pd.read_csv(KAS_FILE)
+
+    if df.empty:
+        st.info("Belum ada data kas.")
+    else:
+        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+        df['Jumlah'] = df['Jumlah'].astype(int)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date())
+        with col2:
+            tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date())
+
+        keyword = st.text_input("Cari Keterangan")
+
+        filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
+                      (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
+        if keyword:
+            filtered = filtered[filtered['Keterangan'].str.contains(keyword, case=False)]
+
+        pemasukan = filtered[filtered['Jenis'] == 'Pemasukan']['Jumlah'].sum()
+        pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
+        saldo = pemasukan - pengeluaran
+
+        st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
+        st.write(f"📤 Total Pengeluaran: Rp {pengeluaran:,}")
+        st.write(f"📦 Saldo: Rp {saldo:,}")
+        st.dataframe(filtered)
 
 # ======== FITUR: STRUKTURAL ========
 if menu == "Struktural":
