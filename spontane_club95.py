@@ -35,7 +35,7 @@ if os.path.exists(LOGO_IMAGE):
             f"""
             <div style='text-align: center; margin-bottom: 1rem;'>
                 <img src='data:image/png;base64,{logo_data}' style='width:100px; margin-bottom: 10px;' />
-                <h1 style='color: #1f2937; font-size: 28px;'>SPONTAN CLUB</h1>
+                <h1 style='color: #1f2937; font-size: 28px;'>SPONTANE CLUB</h1>
             </div>
             """,
             unsafe_allow_html=True
