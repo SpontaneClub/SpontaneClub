@@ -23,7 +23,7 @@ def init_csv(filename, columns):
         df = pd.DataFrame(columns=columns)
         df.to_csv(filename, index=False)
 
-init_csv(KAS_FILE, ["Tanggal", "Jenis", "Keterangan", "Jumlah"])
+init_csv(KAS_FILE, ["Tanggal Bayar", "Jenis", "Detail", "Jumlah"])
 init_csv(AGENDA_FILE, ["Tanggal", "Kegiatan", "Foto"])
 init_csv(STRUKTUR_FILE, ["Jabatan", "Nama"])
 
@@ -59,6 +59,11 @@ if 'user' not in st.session_state:
         st.session_state['user'] = "viewer"
         st.sidebar.info("Masuk sebagai Tamu (melihat saja)")
 
+if 'user' in st.session_state and st.session_state['user'] == "admin":
+    if st.sidebar.button("Keluar"):
+        st.session_state.clear()
+        st.experimental_rerun()
+
 if 'user' not in st.session_state:
     st.stop()
 
@@ -70,12 +75,12 @@ else:
     menu = st.sidebar.radio("Menu", ["Riwayat Kas", "Agenda", "Struktural"])
 
 # ======== FUNGSI TAMBAHAN ========
-def tambah_kas(jenis, keterangan, jumlah):
+def tambah_kas(jenis, detail, jumlah, tanggal_bayar):
     df = pd.read_csv(KAS_FILE)
     data = {
-        "Tanggal": date.today().strftime("%Y-%m-%d"),
+        "Tanggal Bayar": tanggal_bayar,
         "Jenis": jenis,
-        "Keterangan": keterangan,
+        "Detail": detail,
         "Jumlah": jumlah
     }
     df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
@@ -105,21 +110,23 @@ def update_struktur(jabatan, nama):
 # ======== FITUR: PEMASUKAN ========
 if menu == "Pemasukan" and st.session_state['user'] == "admin":
     st.subheader("🟢 Input Pemasukan")
-    ket = st.text_input("Keterangan")
+    tanggal_bayar = st.date_input("Tanggal Bayar", value=date.today())
+    detail = st.text_input("Nama Pembayar")
     jml = st.number_input("Jumlah", min_value=0)
     if st.button("Simpan Pemasukan"):
-        if ket and jml > 0:
-            tambah_kas("Pemasukan", ket, jml)
+        if detail and jml > 0:
+            tambah_kas("Pemasukan", detail, jml, tanggal_bayar.strftime("%Y-%m-%d"))
             st.success("Pemasukan berhasil disimpan!")
 
 # ======== FITUR: PENGELUARAN ========
 if menu == "Pengeluaran" and st.session_state['user'] == "admin":
     st.subheader("🔴 Input Pengeluaran")
-    ket = st.text_input("Keterangan")
+    tanggal_bayar = st.date_input("Tanggal Pengeluaran", value=date.today())
+    detail = st.text_input("Nama Penerima/Detail")
     jml = st.number_input("Jumlah", min_value=0)
     if st.button("Simpan Pengeluaran"):
-        if ket and jml > 0:
-            tambah_kas("Pengeluaran", ket, jml)
+        if detail and jml > 0:
+            tambah_kas("Pengeluaran", detail, jml, tanggal_bayar.strftime("%Y-%m-%d"))
             st.success("Pengeluaran berhasil disimpan!")
 
 # ======== FITUR: RIWAYAT KAS ========
@@ -130,21 +137,13 @@ if menu == "Riwayat Kas":
     if df.empty:
         st.info("Belum ada data kas.")
     else:
-        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+        df['Tanggal Bayar'] = pd.to_datetime(df['Tanggal Bayar'])
         df['Jumlah'] = df['Jumlah'].astype(int)
+        keyword = st.text_input("Cari Nama/Detail")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            tgl_mulai = st.date_input("Dari Tanggal", df['Tanggal'].min().date())
-        with col2:
-            tgl_akhir = st.date_input("Sampai Tanggal", df['Tanggal'].max().date())
-
-        keyword = st.text_input("Cari Keterangan")
-
-        filtered = df[(df['Tanggal'] >= pd.to_datetime(tgl_mulai)) &
-                      (df['Tanggal'] <= pd.to_datetime(tgl_akhir))]
+        filtered = df
         if keyword:
-            filtered = filtered[filtered['Keterangan'].str.contains(keyword, case=False)]
+            filtered = filtered[filtered['Detail'].str.contains(keyword, case=False)]
 
         pemasukan = filtered[filtered['Jenis'] == 'Pemasukan']['Jumlah'].sum()
         pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
@@ -157,7 +156,7 @@ if menu == "Riwayat Kas":
 
 # ======== FITUR: STRUKTURAL ========
 if menu == "Struktural":
-    st.subheader("👥 Struktur Organisasi Spontan Club")
+    st.subheader("👥 Struktur Organisasi Spontane Club")
     df = pd.read_csv(STRUKTUR_FILE)
     for _, row in df.iterrows():
         st.markdown(f"- **{row['Jabatan']}**: {row['Nama']}")
@@ -190,9 +189,8 @@ if menu == "Agenda":
     if df.empty:
         st.info("Belum ada data agenda.")
     else:
-        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
         for _, row in df.iterrows():
-            st.markdown(f"### 📌 {row['Tanggal'].date()} - {row['Kegiatan']}")
+            st.markdown(f"### 📌 {row['Kegiatan']}")
             if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
                 st.image(row['Foto'], width=300)
             st.markdown("---")
