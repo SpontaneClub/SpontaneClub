@@ -120,6 +120,26 @@ def update_struktur(jabatan, nama):
     df = pd.concat([df, pd.DataFrame([{"Jabatan": jabatan, "Nama": nama}])], ignore_index=True)
     df.to_csv(STRUKTUR_FILE, index=False)
 
+# ======== FITUR: PEMASUKAN ========
+if menu == "Pemasukan" and st.session_state['user'] == "admin":
+    st.subheader("🟢 Input Pemasukan")
+    ket = st.text_input("Keterangan")
+    jml = st.number_input("Jumlah", min_value=0)
+    if st.button("Simpan Pemasukan"):
+        if ket and jml > 0:
+            tambah_kas("Pemasukan", ket, jml)
+            st.success("Pemasukan berhasil disimpan!")
+
+# ======== FITUR: PENGELUARAN ========
+if menu == "Pengeluaran" and st.session_state['user'] == "admin":
+    st.subheader("🔴 Input Pengeluaran")
+    ket = st.text_input("Keterangan")
+    jml = st.number_input("Jumlah", min_value=0)
+    if st.button("Simpan Pengeluaran"):
+        if ket and jml > 0:
+            tambah_kas("Pengeluaran", ket, jml)
+            st.success("Pengeluaran berhasil disimpan!")
+
 # ======== FITUR: STRUKTURAL ========
 if menu == "Struktural":
     st.subheader("👥 Struktur Organisasi Spontan Club")
