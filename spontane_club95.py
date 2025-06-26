@@ -6,7 +6,7 @@ from PIL import Image
 import base64
 
 # ======== KONFIGURASI HALAMAN ========
-st.set_page_config(page_title="Spontan Club", layout="centered")
+st.set_page_config(page_title="Spontane Club", layout="centered")
 
 # ======== KONFIGURASI FILE & FOLDER ========
 KAS_FILE = 'kas_data.csv'
@@ -63,7 +63,7 @@ if 'user' not in st.session_state:
     st.stop()
 
 # ======== MENU ========
-st.title("⚽ Spontan Club Management")
+st.title("⚽ Spontane Club Management")
 if st.session_state['user'] == "admin":
     menu = st.sidebar.radio("Menu", ["Pemasukan", "Pengeluaran", "Riwayat Kas", "Input Agenda", "Agenda", "Struktural"])
 else:
