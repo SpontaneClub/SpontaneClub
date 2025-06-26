@@ -59,9 +59,14 @@ if 'user' not in st.session_state:
         st.session_state['user'] = "viewer"
         st.sidebar.info("Masuk sebagai Tamu (melihat saja)")
 
+# ======== LOGOUT ========
+if st.session_state.get('logout'):
+    st.session_state.clear()
+    st.stop()
+
 if 'user' in st.session_state and st.session_state['user'] == "admin":
     if st.sidebar.button("Keluar"):
-        st.session_state.clear()
+        st.session_state['logout'] = True
         st.experimental_rerun()
 
 if 'user' not in st.session_state:
