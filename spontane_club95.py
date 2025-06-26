@@ -61,7 +61,7 @@ if 'user' not in st.session_state:
 
 # ======== LOGOUT ========
 if st.session_state.get('user') == 'admin':
-    if st.sidebar.button("Keluar"):
+    if st.sidebar.button("Logout"):
         st.session_state.clear()
         st.stop()
 
