@@ -23,7 +23,7 @@ def init_csv(filename, columns):
         df = pd.DataFrame(columns=columns)
         df.to_csv(filename, index=False)
 
-init_csv(KAS_FILE, ["Tanggal Bayar", "Jenis", "Detail", "Jumlah"])
+init_csv(KAS_FILE, ["Tanggal", "Jenis", "Detail", "Jumlah"])
 init_csv(AGENDA_FILE, ["Tanggal", "Kegiatan", "Foto"])
 init_csv(STRUKTUR_FILE, ["Jabatan", "Nama"])
 
@@ -75,10 +75,10 @@ else:
     menu = st.sidebar.radio("Menu", ["Riwayat Kas", "Agenda", "Struktural"])
 
 # ======== FUNGSI TAMBAHAN ========
-def tambah_kas(jenis, detail, jumlah, tanggal_bayar):
+def tambah_kas(jenis, detail, jumlah, tanggal):
     df = pd.read_csv(KAS_FILE)
     data = {
-        "Tanggal Bayar": tanggal_bayar,
+        "Tanggal": tanggal,
         "Jenis": jenis,
         "Detail": detail,
         "Jumlah": jumlah
@@ -110,23 +110,23 @@ def update_struktur(jabatan, nama):
 # ======== FITUR: PEMASUKAN ========
 if menu == "Pemasukan" and st.session_state['user'] == "admin":
     st.subheader("🟢 Input Pemasukan")
-    tanggal_bayar = st.date_input("Tanggal Bayar", value=date.today())
+    tanggal = st.date_input("Tanggal", value=date.today())
     detail = st.text_input("Nama Pembayar")
     jml = st.number_input("Jumlah", min_value=0)
     if st.button("Simpan Pemasukan"):
         if detail and jml > 0:
-            tambah_kas("Pemasukan", detail, jml, tanggal_bayar.strftime("%Y-%m-%d"))
+            tambah_kas("Pemasukan", detail, jml, tanggal.strftime("%Y-%m-%d"))
             st.success("Pemasukan berhasil disimpan!")
 
 # ======== FITUR: PENGELUARAN ========
 if menu == "Pengeluaran" and st.session_state['user'] == "admin":
     st.subheader("🔴 Input Pengeluaran")
-    tanggal_bayar = st.date_input("Tanggal Pengeluaran", value=date.today())
+    tanggal = st.date_input("Tanggal", value=date.today())
     detail = st.text_input("Nama Penerima/Detail")
     jml = st.number_input("Jumlah", min_value=0)
     if st.button("Simpan Pengeluaran"):
         if detail and jml > 0:
-            tambah_kas("Pengeluaran", detail, jml, tanggal_bayar.strftime("%Y-%m-%d"))
+            tambah_kas("Pengeluaran", detail, jml, tanggal.strftime("%Y-%m-%d"))
             st.success("Pengeluaran berhasil disimpan!")
 
 # ======== FITUR: RIWAYAT KAS ========
@@ -137,7 +137,7 @@ if menu == "Riwayat Kas":
     if df.empty:
         st.info("Belum ada data kas.")
     else:
-        df['Tanggal Bayar'] = pd.to_datetime(df['Tanggal Bayar']).dt.date
+        df['Tanggal'] = pd.to_datetime(df['Tanggal']).dt.strftime('%Y-%m-%d')
         df['Jumlah'] = df['Jumlah'].astype(int)
         keyword = st.text_input("Cari Nama/Detail")
 
@@ -152,7 +152,7 @@ if menu == "Riwayat Kas":
         st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
         st.write(f"📤 Total Pengeluaran: Rp {pengeluaran:,}")
         st.write(f"📦 Saldo: Rp {saldo:,}")
-        st.dataframe(filtered)
+        st.dataframe(filtered[['Tanggal', 'Jenis', 'Detail', 'Jumlah']])
 
 # ======== FITUR: STRUKTURAL ========
 if menu == "Struktural":
@@ -192,5 +192,5 @@ if menu == "Agenda":
         for _, row in df.iterrows():
             st.markdown(f"### 📌 {row['Kegiatan']}")
             if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
-                st.image(row['Foto'], width=300)
+                st.image(row['Foto'], use_column_width=True)
             st.markdown("---")
