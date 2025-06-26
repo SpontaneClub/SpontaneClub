@@ -43,31 +43,27 @@ if os.path.exists(LOGO_IMAGE):
 
 # ======== LOGIN ========
 st.sidebar.title("Login")
-username = st.sidebar.text_input("Username")
-password = st.sidebar.text_input("Password", type="password")
-login_btn = st.sidebar.button("Login")
-
-if login_btn:
-    if username == "admin" and password == "'Spontan1995":
-        st.session_state['user'] = "admin"
-        st.sidebar.success("Login sebagai Admin")
-    else:
-        st.sidebar.warning("Login gagal")
-
 if 'user' not in st.session_state:
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    login_btn = st.sidebar.button("Login")
+
+    if login_btn:
+        if username == "admin" and password == "'Spontan1995":
+            st.session_state['user'] = "admin"
+            st.sidebar.success("Login sebagai Admin")
+        else:
+            st.sidebar.warning("Login gagal")
+
     if st.sidebar.button("Lanjut sebagai Tamu"):
         st.session_state['user'] = "viewer"
         st.sidebar.info("Masuk sebagai Tamu (melihat saja)")
 
 # ======== LOGOUT ========
-if st.session_state.get('logout'):
-    st.session_state.clear()
-    st.stop()
-
-if 'user' in st.session_state and st.session_state['user'] == "admin":
+if st.session_state.get('user') == 'admin':
     if st.sidebar.button("Keluar"):
-        st.session_state['logout'] = True
-        st.experimental_rerun()
+        st.session_state.clear()
+        st.stop()
 
 if 'user' not in st.session_state:
     st.stop()
@@ -142,7 +138,6 @@ if menu == "Riwayat Kas":
     if df.empty:
         st.info("Belum ada data kas.")
     else:
-        df['Tanggal'] = pd.to_datetime(df['Tanggal']).dt.strftime('%Y-%m-%d')
         df['Jumlah'] = df['Jumlah'].astype(int)
         keyword = st.text_input("Cari Nama/Detail")
 
