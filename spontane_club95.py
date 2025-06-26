@@ -136,4 +136,28 @@ if menu == "Struktural":
             if nama_baru:
                 update_struktur(jabatan, nama_baru)
                 st.success(f"Struktur '{jabatan}' berhasil diperbarui menjadi {nama_baru}.")
-                st.experimental_rerun()
+
+# ======== FITUR: INPUT AGENDA ========
+if menu == "Input Agenda" and st.session_state['user'] == "admin":
+    st.subheader("📝 Input Agenda Kegiatan")
+    tanggal = st.date_input("Tanggal", value=date.today())
+    kegiatan = st.text_input("Kegiatan")
+    foto = st.file_uploader("Upload Foto Bersama", type=["jpg", "png"])
+    if st.button("Simpan Agenda"):
+        if kegiatan:
+            tambah_agenda(tanggal.strftime("%Y-%m-%d"), kegiatan, foto)
+            st.success("Agenda berhasil disimpan!")
+
+# ======== FITUR: AGENDA ========
+if menu == "Agenda":
+    st.subheader("📅 Riwayat Agenda Kegiatan")
+    df = pd.read_csv(AGENDA_FILE)
+    if df.empty:
+        st.info("Belum ada data agenda.")
+    else:
+        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+        for _, row in df.iterrows():
+            st.markdown(f"### 📌 {row['Tanggal'].date()} - {row['Kegiatan']}")
+            if pd.notna(row['Foto']) and os.path.exists(row['Foto']):
+                st.image(row['Foto'], width=300)
+            st.markdown("---")
