@@ -10,8 +10,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 # ======== KONEKSI GOOGLE SHEETS via Secrets ========
 def connect_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_dict = json.loads(st.secrets["GOOGLE_SHEETS_CREDS"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
     client = gspread.authorize(creds)
     sheet = client.open("SpontaneClubData")
     return {
@@ -19,6 +18,7 @@ def connect_gsheet():
         "agenda": sheet.worksheet("agenda_data"),
         "struktur": sheet.worksheet("struktur_data")
     }
+
 
 sheets = connect_gsheet()
 
