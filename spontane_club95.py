@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date
 from PIL import Image
 import base64
-import json
+import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -19,10 +19,9 @@ def connect_gsheet():
         "struktur": sheet.worksheet("struktur_data")
     }
 
-
 sheets = connect_gsheet()
 
-# ======== FUNGSI UNTUK GOOGLE SHEETS ========
+# ======== FUNGSI GOOGLE SHEETS ========
 def tambah_kas(jenis, detail, jumlah, tanggal):
     sheets["kas"].append_row([tanggal, jenis, detail, jumlah])
 
@@ -81,7 +80,7 @@ if 'user' not in st.session_state:
     st.stop()
 
 # ======== MENU ========
-st.title("⚽ Spontane Club Management")
+st.title("🏀 Spontane Club Management")
 menu = st.sidebar.radio("Menu", [
     "Pemasukan", "Pengeluaran", "Riwayat Kas",
     "Input Agenda", "Agenda", "Struktural"
@@ -119,12 +118,12 @@ elif menu == "Riwayat Kas":
         pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
         saldo = pemasukan - pengeluaran
         st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
-        st.write(f"📤 Total Pengeluaran: Rp {pengeluaran:,}")
-        st.write(f"📦 Saldo: Rp {saldo:,}")
+        st.write(f"🛄 Total Pengeluaran: Rp {pengeluaran:,}")
+        st.write(f"🛆 Saldo: Rp {saldo:,}")
         st.dataframe(filtered)
 
 elif menu == "Agenda":
-    st.subheader("📅 Riwayat Agenda Kegiatan")
+    st.subheader("🗕️ Riwayat Agenda Kegiatan")
     data = sheets["agenda"].get_all_records()
     if not data:
         st.info("Belum ada data agenda.")
