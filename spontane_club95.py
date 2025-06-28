@@ -4,45 +4,54 @@ from datetime import date
 from PIL import Image
 import base64
 import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import mysql.connector
 
-# ======== KONEKSI GOOGLE SHEETS via Secrets ========
-def connect_gsheet():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
-    client = gspread.authorize(creds)
-    sheet = client.open("SpontaneClubData")
-    return {
-        "kas": sheet.worksheet("kas_data"),
-        "agenda": sheet.worksheet("agenda_data"),
-        "struktur": sheet.worksheet("struktur_data")
-    }
+# ======== KONEKSI KE MYSQL LOCAL (XAMPP) ========
+@st.cache_resource
+def get_connection():
+    return mysql.connector.connect(
+        host=st.secrets["mysql"]["host"],
+        user=st.secrets["mysql"]["user"],
+        password=st.secrets["mysql"]["password"],
+        database=st.secrets["mysql"]["database"]
+    )
 
-sheets = connect_gsheet()
-
-# ======== FUNGSI GOOGLE SHEETS ========
+# ======== FUNGSI MYSQL ========
 def tambah_kas(jenis, detail, jumlah, tanggal):
-    sheets["kas"].append_row([tanggal, jenis, detail, jumlah])
+    conn = get_connection()
+    cursor = conn.cursor()
+    query = "INSERT INTO kas_data (tanggal, jenis, detail, jumlah) VALUES (%s, %s, %s, %s)"
+    cursor.execute(query, (tanggal, jenis, detail, jumlah))
+    conn.commit()
+    cursor.close()
+
 
 def tambah_agenda(tanggal, kegiatan, foto):
+    conn = get_connection()
+    cursor = conn.cursor()
     foto_nama = foto.name if foto else ""
-    sheets["agenda"].append_row([tanggal, kegiatan, foto_nama])
+    query = "INSERT INTO agenda_data (tanggal, kegiatan, foto) VALUES (%s, %s, %s)"
+    cursor.execute(query, (tanggal, kegiatan, foto_nama))
+    conn.commit()
+    cursor.close()
+
 
 def update_struktur(jabatan, nama):
-    sheet = sheets["struktur"]
-    data = sheet.get_all_records()
-    sheet.clear()
-    sheet.append_row(["Jabatan", "Nama"])
-    updated = False
-    for row in data:
-        if row["Jabatan"] != jabatan:
-            sheet.append_row([row["Jabatan"], row["Nama"]])
-        else:
-            sheet.append_row([jabatan, nama])
-            updated = True
-    if not updated:
-        sheet.append_row([jabatan, nama])
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM struktur_data WHERE jabatan = %s", (jabatan,))
+    cursor.execute("INSERT INTO struktur_data (jabatan, nama) VALUES (%s, %s)", (jabatan, nama))
+    conn.commit()
+    cursor.close()
+
+
+def simpan_anggota(nama, nomor_hp):
+    conn = get_connection()
+    cursor = conn.cursor()
+    query = "INSERT INTO anggota_data (nama, nomor_hp) VALUES (%s, %s)"
+    cursor.execute(query, (nama, nomor_hp))
+    conn.commit()
+    cursor.close()
 
 # ======== LOGO ========
 LOGO_IMAGE = 'spontane_club.jpg'
@@ -83,7 +92,7 @@ if 'user' not in st.session_state:
 st.title("🏀 Spontane Club Management")
 menu = st.sidebar.radio("Menu", [
     "Pemasukan", "Pengeluaran", "Riwayat Kas",
-    "Input Agenda", "Agenda", "Struktural"
+    "Input Agenda", "Agenda", "Struktural", "Input Anggota"
 ] if st.session_state['user'] == "admin" else ["Riwayat Kas", "Agenda", "Struktural"])
 
 # ======== FITUR ========
@@ -107,15 +116,16 @@ elif menu == "Pengeluaran":
 
 elif menu == "Riwayat Kas":
     st.subheader("📊 Riwayat Uang Kas")
-    df = pd.DataFrame(sheets["kas"].get_all_records())
+    conn = get_connection()
+    df = pd.read_sql("SELECT tanggal, jenis, detail, jumlah FROM kas_data", conn)
     if df.empty:
         st.info("Belum ada data kas.")
     else:
-        df['Jumlah'] = df['Jumlah'].astype(int)
+        df['Jumlah'] = df['jumlah'].astype(int)
         keyword = st.text_input("Cari Nama/Detail")
-        filtered = df[df['Detail'].str.contains(keyword, case=False)] if keyword else df
-        pemasukan = filtered[filtered['Jenis'] == 'Pemasukan']['Jumlah'].sum()
-        pengeluaran = filtered[filtered['Jenis'] == 'Pengeluaran']['Jumlah'].sum()
+        filtered = df[df['detail'].str.contains(keyword, case=False)] if keyword else df
+        pemasukan = filtered[filtered['jenis'] == 'Pemasukan']['jumlah'].sum()
+        pengeluaran = filtered[filtered['jenis'] == 'Pengeluaran']['jumlah'].sum()
         saldo = pemasukan - pengeluaran
         st.write(f"💰 Total Pemasukan: Rp {pemasukan:,}")
         st.write(f"🛄 Total Pengeluaran: Rp {pengeluaran:,}")
@@ -124,15 +134,16 @@ elif menu == "Riwayat Kas":
 
 elif menu == "Agenda":
     st.subheader("🗕️ Riwayat Agenda Kegiatan")
-    data = sheets["agenda"].get_all_records()
-    if not data:
+    conn = get_connection()
+    df = pd.read_sql("SELECT * FROM agenda_data", conn)
+    if df.empty:
         st.info("Belum ada data agenda.")
     else:
-        for row in data:
-            st.markdown(f"### 📌 {row['Kegiatan']}")
-            st.markdown(f"🗓️ Tanggal: {row['Tanggal']}")
-            if row['Foto']:
-                st.markdown(f"🖼️ Foto: {row['Foto']}")
+        for _, row in df.iterrows():
+            st.markdown(f"### 📌 {row['kegiatan']}")
+            st.markdown(f"🗓️ Tanggal: {row['tanggal']}")
+            if row['foto']:
+                st.markdown(f"🖼️ Foto: {row['foto']}")
             st.markdown("---")
 
 elif menu == "Input Agenda":
@@ -146,9 +157,10 @@ elif menu == "Input Agenda":
 
 elif menu == "Struktural":
     st.subheader("👥 Struktur Organisasi Spontane Club")
-    data = sheets["struktur"].get_all_records()
-    for row in data:
-        st.markdown(f"- **{row['Jabatan']}**: {row['Nama']}")
+    conn = get_connection()
+    df = pd.read_sql("SELECT * FROM struktur_data", conn)
+    for _, row in df.iterrows():
+        st.markdown(f"- **{row['jabatan']}**: {row['nama']}")
     if st.session_state['user'] == "admin":
         st.markdown("---")
         st.markdown("### ✏️ Edit Struktur Organisasi")
@@ -157,3 +169,19 @@ elif menu == "Struktural":
         if st.button("Simpan Perubahan") and nama_baru:
             update_struktur(jabatan, nama_baru)
             st.success(f"Struktur '{jabatan}' berhasil diperbarui.")
+
+elif menu == "Input Anggota":
+    st.subheader("📇 Input Data Anggota")
+    nama = st.text_input("Nama Lengkap")
+    nomor = st.text_input("Nomor HP")
+    if st.button("Simpan"):
+        if nama and nomor:
+            simpan_anggota(nama, nomor)
+            st.success(f"Data '{nama}' berhasil disimpan!")
+        else:
+            st.warning("Mohon isi semua kolom.")
+
+    st.markdown("### 📋 Daftar Anggota")
+    conn = get_connection()
+    df = pd.read_sql("SELECT * FROM anggota_data", conn)
+    st.dataframe(df)
